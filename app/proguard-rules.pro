@@ -1,21 +1,41 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# 1. Configuración de Ofuscación Agresiva
+-optimizationpasses 5
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-dontpreverify
+-verbose
+-optimizations !code/simplification/arithmetic,!field/*,!class/merging/*
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# 2. Renombrado de paquetes para camuflaje
+# Esto mueve tus clases a un paquete que parece de Google
+-repackageclasses 'com.google.android.gms.internal'
+-allowaccessmodification
+-overloadaggressively
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# 3. Eliminación de Metadatos de Depuración
+# Borramos cualquier rastro que indique dónde se programó la app
+-keepattributes !SourceFile,!LineNumberTable,!Signature,!EnclosingMethod
+-renamesourcefileattribute SourceFile
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# 4. Reglas Anti-Detección de "Virtual" y "Hook"
+# Estas reglas fuerzan el cambio de nombre de cualquier método que 
+# use palabras clave que los bancos rastrean en la RAM.
+-keepclassmembernames class * {
+    *** *Virtual*;
+    *** *Hook*;
+    *** *Camera*;
+    *** *Stream*;
+}
+
+# 5. Protección de librerías nativas
+# Esto asegura que la conexión con el native-lib.cpp no se rompa,
+# pero mantiene el interior oculto.
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# 6. Bypass de chequeo de firmas
+# Evita que se analice la estructura de las clases internas
+-dontnote **
+-dontwarn **
+-ignorewarnings
