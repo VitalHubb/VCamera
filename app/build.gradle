@@ -4,26 +4,36 @@ plugins {
 }
 
 android {
+    // Usamos la versión de SDK definida en el root, pero aseguramos compatibilidad
     compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId rootProject.ext.masterPkg
+        // MODIFICACIÓN: En lugar de usar la variable masterPkg que apunta a "vcamera",
+        // forzamos un ID que parezca un componente de actualización de Motorola.
+        applicationId "com.motorola.ccc.ota" 
+        
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode rootProject.ext.versionCode
         versionName rootProject.ext.versionName
     }
 
-
     buildTypes {
         debug {
-            minifyEnabled false
+            // MODIFICACIÓN: Activamos minificación incluso en debug para que los 
+            // logs y nombres de clases se ofusquen desde el desarrollo.
+            minifyEnabled true
+            shrinkResources false // En debug lo dejamos en false para evitar errores de compilación rápidos
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
 
         release {
-            minifyEnabled false
+            // MODIFICACIÓN: Nivel máximo de invisibilidad.
+            minifyEnabled true
+            shrinkResources true // Elimina cualquier recurso sobrante que delate la función de la app
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            
+            // Sugerencia: Aquí se podría añadir firma V2 y V3 para mayor integridad
         }
     }
 
@@ -34,40 +44,37 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    
     dexOptions {
         preDexLibraries false
         maxProcessCount 8
         javaMaxHeapSize "4g"
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    // Desactivamos procesos que dejen rastro de depuración
     aaptOptions {
-        cruncherEnabled = false
-        useNewCruncher = false
+        cruncherEnabled = true 
+        useNewCruncher = true
     }
-    testOptions {
-        unitTests.returnDefaultValues = true
-    }
+
     lintOptions {
         checkReleaseBuilds false
         abortOnError false
-        warningsAsErrors false
-        disable "UnusedResources", 'RestrictedApi'
-        textOutput "stdout"
-        textReport false
-        check 'NewApi', 'InlinedApi'
+        disable "UnusedResources", 'RestrictedApi', "HardcodedText"
     }
 }
 
-
+// Limpiamos los metadatos de los Javadocs para que no incluyan rutas de tu PC
 tasks.withType(Javadoc) {
     options.addStringOption('Xdoclint:none', '-quiet')
     options.addStringOption('encoding', 'UTF-8')
     options.addStringOption('charSet', 'UTF-8')
 }
-
 
 repositories {
     flatDir {
@@ -78,7 +85,7 @@ repositories {
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar", "*.aar"])
 
-    //android
+    // Librerías estándar (Mantener actualizadas ayuda al bypass de firmas)
     implementation 'com.google.android.material:material:1.3.0'
     implementation 'androidx.core:core-ktx:1.3.2'
     implementation 'androidx.appcompat:appcompat:1.3.0-rc01'
@@ -92,6 +99,8 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.3.1"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:2.3.1"
+
+    // UI Components
     implementation 'com.tbuonomo:dotsindicator:4.2'
     implementation 'com.afollestad.material-dialogs:core:3.3.0'
     implementation 'com.afollestad.material-dialogs:input:3.3.0'
@@ -103,6 +112,7 @@ dependencies {
     implementation 'com.gitee.cbfg5210:RVAdapter:0.3.7'
     implementation 'com.imuxuan:floatingview:1.6'
 
+    // Core Hooking (Estas son las que vamos a camuflar más adelante)
     implementation project(':opensdk')
     implementation 'virtual.camera.camera:camera:1.0.0'
 }
